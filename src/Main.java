@@ -1,7 +1,4 @@
-import calculate.Calc;
-import calculate.Initialize;
-import calculate.RelInfoConsumer;
-import calculate.RelInfoDistributor;
+import calculate.*;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import parseinfo.Script;
 import recalculate.Over;
@@ -26,17 +23,21 @@ public final class Main {
      */
     public static void main(final String[] args) throws Exception {
         ObjectMapper objectMapper = new ObjectMapper();
-        Script script = objectMapper.readValue(new File(args[0]), Script.class);
+         Script script = objectMapper.readValue(new File(args[0]), Script.class);
 
         Initialize initialize = new Initialize(script);
-        List<RelInfoDistributor> relInfoDistributors = initialize.initRelInfoDistributors();
+        List<RelInfoProducer> relInfoProducers = initialize.initRelInfoProducers();
+        List<RelInfoDistributor> relInfoDistributors =
+                initialize.initRelInfoDistributors(relInfoProducers);
         List<RelInfoConsumer> relInfoConsumers
                 =  initialize.initRelInfoConsumers(relInfoDistributors);
 
         OverFactory overFactory = OverFactory.getInstance();
-        Over over = overFactory.getOver("consumersFirst", new LinkedList<>(), new LinkedList<>());
+        Over over = overFactory.getOver("consumersFirst", new LinkedList<>(),
+                new LinkedList<>(), new LinkedList<>());
         Calc calc = new Calc(script, over.getDistributors(), over.getConsumers(),
-                relInfoConsumers, relInfoDistributors);
+                over.getEnergyProducers(), relInfoConsumers,
+                relInfoDistributors, relInfoProducers);
         calc.calculate();
 
         objectMapper.writerWithDefaultPrettyPrinter().writeValue(new File(args[1]), over);

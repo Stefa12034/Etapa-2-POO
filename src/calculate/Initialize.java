@@ -2,6 +2,7 @@ package calculate;
 
 import parseinfo.Script;
 import recalculate.Contract;
+import strategies.*;
 
 import java.util.LinkedList;
 import java.util.List;
@@ -14,21 +15,45 @@ public class Initialize {
     }
 
     /**
+     * Initialize the list of RelInfoProducers
+     */
+    public List<RelInfoProducer> initRelInfoProducers() {
+
+        List<RelInfoProducer> relInfoProducers = new LinkedList<>();
+        for (int i = 0; i < script.getInitialData().getProducers().size(); i++) {
+
+            relInfoProducers.add(new RelInfoProducer(
+                    script.getInitialData().getProducers().get(i).getId(),
+                    script.getInitialData().getProducers().get(i).getEnergyType(),
+                    script.getInitialData().getProducers().get(i).getMaxDistributors(),
+                    script.getInitialData().getProducers().get(i).getPriceKW(),
+                    script.getInitialData().getProducers().get(i).getEnergyPerDistributor(),
+                    new LinkedList<>(), new LinkedList<>()));
+        }
+        return relInfoProducers;
+    }
+
+    /**
      * Initialize the list of RelInfoDistributors
      */
-    public List<RelInfoDistributor> initRelInfoDistributors() {
-        List<RelInfoDistributor> relInfoDistributors = new LinkedList<>();
+    public List<RelInfoDistributor> initRelInfoDistributors(
+            final List<RelInfoProducer> relInfoProducers) {
 
+        List<RelInfoDistributor> relInfoDistributors = new LinkedList<>();
         for (int i = 0; i < script.getInitialData().getDistributors().size(); i++) {
+
+            EnergyStrategy energyStrategy = new EnergyStrategy(
+                    script.getInitialData().getDistributors().get(i).getProducerStrategy(), i,
+                    script.getInitialData().getDistributors().get(i).getEnergyNeededKW(),
+                    relInfoProducers);
+            int productionCost = energyStrategy.productionCost();
             relInfoDistributors.add(new RelInfoDistributor(
                     script.getInitialData().getDistributors().get(i).getId(),
                     script.getInitialData().getDistributors().get(i).getInitialBudget(), 0,
                     script.getInitialData().getDistributors().get(
                             i).getInitialInfrastructureCost(),
-                    script.getInitialData().getDistributors().get(i).getInitialProductionCost(),
-                    false, new LinkedList<>()));
+                    productionCost, false, new LinkedList<>(), 0));
         }
-
         return relInfoDistributors;
     }
 
@@ -68,24 +93,23 @@ public class Initialize {
         mins[0] = minCost;
         mins[1] = minIndex;
 
+        relInfoDistributors.get(mins[1]).setContractCost(mins[0]);
         return mins;
     }
 
     /**
      * Gives the min cost of the contract and his ditributor id at the beginning
      */
-    public Integer[] newContract() {
+    public Integer[] newContract(List<RelInfoDistributor> relInfoDistributors) {
         int minCost = (int) Double.POSITIVE_INFINITY;
         int minIndex = 0;
 
         for (int j = 0; j < script.getInitialData().getDistributors().size(); j++) {
             int cost;
             int profit = (int) Math.round(Math.floor(0.2
-                    * script.getInitialData().getDistributors().get(
-                            j).getInitialProductionCost()));
+                    * relInfoDistributors.get(j).getProductionCost()));
             cost = script.getInitialData().getDistributors().get(j).getInitialInfrastructureCost()
-                    + script.getInitialData().getDistributors().get(j).getInitialProductionCost()
-                    + profit;
+                    + relInfoDistributors.get(j).getProductionCost() + profit;
 
             if (minCost > cost) {
                 minCost = cost;
@@ -97,6 +121,7 @@ public class Initialize {
         mins[0] = minCost;
         mins[1] = minIndex;
 
+        relInfoDistributors.get(mins[1]).setContractCost(mins[0]);
         return mins;
 
     }
@@ -106,10 +131,11 @@ public class Initialize {
      */
     public List<RelInfoConsumer> initRelInfoConsumers(
             final List<RelInfoDistributor> relInfoDistributors) {
-        List<RelInfoConsumer> relInfoConsumers = new LinkedList<>();
-        Integer[] mins = newContract();
 
+        List<RelInfoConsumer> relInfoConsumers = new LinkedList<>();
+        Integer[] mins = newContract(relInfoDistributors);
         for (int i = 0; i < script.getInitialData().getConsumers().size(); i++) {
+
             relInfoDistributors.get(mins[1]).setContractSize(
                     relInfoDistributors.get(mins[1]).getContractSize() + 1);
             relInfoDistributors.get(mins[1]).getContracts().add(
@@ -124,8 +150,6 @@ public class Initialize {
                     script.getInitialData().getConsumers().get(i).getMonthlyIncome(),
                     mins[1], false, false, 0));
         }
-
         return relInfoConsumers;
     }
-
 }

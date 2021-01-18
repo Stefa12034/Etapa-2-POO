@@ -4,7 +4,8 @@ import java.util.List;
 
 public class MonthlyUpdate {
     private List<Consumer> newConsumers;
-    private List<CostsChange> costsChanges;
+    private List<DistributorChanges> distributorChanges;
+    private List<ProducerChanges> producerChanges;
 
     /**
      * List of newConsumers getter
@@ -23,14 +24,28 @@ public class MonthlyUpdate {
     /**
      * List of constsChanges getter
      */
-    public List<CostsChange> getCostsChanges() {
-        return costsChanges;
+    public List<DistributorChanges> getDistributorChanges() {
+        return distributorChanges;
     }
 
     /**
      * List of constsChanges setter
      */
-    public void setCostsChanges(final List<CostsChange> costsChanges) {
-        this.costsChanges = costsChanges;
+    public void setDistributorChanges(final List<DistributorChanges> distributorChanges) {
+        this.distributorChanges = distributorChanges;
+    }
+
+    /**
+     * List of producerChange getter
+     */
+    public List<ProducerChanges> getProducerChanges() {
+        return producerChanges;
+    }
+
+    /**
+     * List of producerChanges setter
+     */
+    public void setProducerChanges(List<ProducerChanges> producerChanges) {
+        this.producerChanges = producerChanges;
     }
 }

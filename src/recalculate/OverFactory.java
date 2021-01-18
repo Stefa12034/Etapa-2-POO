@@ -20,11 +20,13 @@ public class OverFactory {
      */
     public Over getOver(final String overType,
                                       final List<RecalConsumer> recalConsumers,
-                                      final List<RecalDistributor> recalDistributors) {
+                                      final List<RecalDistributor> recalDistributors,
+                                      final List<RecalProducer> recalProducers) {
         return switch (overType) {
-            case "consumersFirst" -> new OverConsumersFirst(recalConsumers, recalDistributors);
+            case "consumersFirst" -> new OverConsumersFirst(recalConsumers, recalDistributors,
+                    recalProducers);
             case "distributorsFirst" -> new OverDistributorsFirst(recalDistributors,
-                    recalConsumers);
+                    recalConsumers, recalProducers);
             default -> throw new IllegalArgumentException("Wrong value: " + overType);
         };
     }

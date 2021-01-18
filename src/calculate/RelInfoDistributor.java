@@ -12,10 +12,12 @@ public class RelInfoDistributor {
     private int productionCost;
     private boolean isBankrupt;
     private List<Contract> contracts;
+    private int contractCost;
 
     public RelInfoDistributor(final int id, final int budget, final int contractSize,
                               final int infrastructureCost, final int productionCost,
-                              final boolean isBankrupt, final List<Contract> contracts) {
+                              final boolean isBankrupt, final List<Contract> contracts,
+                              final int contractCost) {
         this.id = id;
         this.budget = budget;
         this.contractSize = contractSize;
@@ -23,6 +25,7 @@ public class RelInfoDistributor {
         this.productionCost = productionCost;
         this.isBankrupt = isBankrupt;
         this.contracts = contracts;
+        this.contractCost = contractCost;
     }
 
     /**
@@ -133,5 +136,19 @@ public class RelInfoDistributor {
      */
     public void setProductionCost(final int productionCost) {
         this.productionCost = productionCost;
+    }
+
+    /**
+     * contractCost getter
+     */
+    public int getContractCost() {
+        return contractCost;
+    }
+
+    /**
+     * contractCost setter
+     */
+    public void setContractCost(final int contractCost) {
+        this.contractCost = contractCost;
     }
 }

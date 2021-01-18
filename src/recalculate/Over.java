@@ -5,10 +5,13 @@ import java.util.List;
 public abstract class Over {
     private List<RecalConsumer> consumers;
     private List<RecalDistributor> distributors;
+    private List<RecalProducer> energyProducers;
 
-    public Over(final List<RecalConsumer> consumers, final List<RecalDistributor> distributors) {
+    public Over(final List<RecalConsumer> consumers, final List<RecalDistributor> distributors,
+                final List<RecalProducer> energyProducers) {
         this.consumers = consumers;
         this.distributors = distributors;
+        this.energyProducers = energyProducers;
     }
 
     /**
@@ -37,5 +40,19 @@ public abstract class Over {
      */
     public void setDistributors(final List<RecalDistributor> distributors) {
         this.distributors = distributors;
+    }
+
+    /**
+     * List of energyProducer getter
+     */
+    public List<RecalProducer> getEnergyProducers() {
+        return energyProducers;
+    }
+
+    /**
+     * List of energyProducer setter
+     */
+    public void setEnergyProducers(final List<RecalProducer> energyProducers) {
+        this.energyProducers = energyProducers;
     }
 }

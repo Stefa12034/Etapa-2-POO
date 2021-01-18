@@ -1,28 +1,36 @@
 package calculate;
 
 import parseinfo.Script;
-import recalculate.Contract;
-import recalculate.RecalConsumer;
-import recalculate.RecalDistributor;
+import recalculate.*;
+import strategies.EnergyStrategy;
 
+import java.util.Comparator;
+import java.util.LinkedList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class Calc {
     private final Script script;
     private final List<RecalDistributor> recalDistributors;
     private final List<RecalConsumer> recalConsumers;
+    private final List<RecalProducer> recalProducers;
     private final List<RelInfoConsumer> relInfoConsumers;
     private final List<RelInfoDistributor> relInfoDistributors;
+    private final List<RelInfoProducer> relInfoProducers;
 
     public Calc(final Script script, final List<RecalDistributor> recalDistributors,
                 final List<RecalConsumer> recalConsumers,
+                final List<RecalProducer> recalProducers,
                 final List<RelInfoConsumer> relInfoConsumers,
-                final List<RelInfoDistributor> relInfoDistributors) {
+                final List<RelInfoDistributor> relInfoDistributors,
+                final List<RelInfoProducer> relInfoProducers) {
         this.script = script;
         this.recalDistributors = recalDistributors;
         this.recalConsumers = recalConsumers;
+        this.recalProducers = recalProducers;
         this.relInfoConsumers = relInfoConsumers;
         this.relInfoDistributors = relInfoDistributors;
+        this.relInfoProducers = relInfoProducers;
     }
 
     /**
@@ -52,12 +60,10 @@ public class Calc {
                 relInfoConsumers.get(j).setRemainedMonths(
                         script.getInitialData().getDistributors().get(
                         relInfoConsumers.get(j).getIdDistributor()).getContractLength());
-
                 relInfoDistributors.get(relInfoConsumers.get(
                         j).getIdDistributor()).getContracts().add(new Contract(
                         j, mins[0], relInfoConsumers.get(j).getRemainedMonths()));
             }
-
             relInfoConsumers.get(j).setRemainedMonths(
                     relInfoConsumers.get(j).getRemainedMonths() - 1);
 
@@ -67,6 +73,7 @@ public class Calc {
                     relInfoConsumers.get(j).setRestant(true);
                     relInfoConsumers.get(j).setOldPrice(relInfoConsumers.get(j).getPrice());
                 } else {
+
                     relInfoConsumers.get(j).setBudget(relInfoConsumers.get(j).getBudget()
                             - relInfoConsumers.get(j).getPrice());
                     relInfoDistributors.get(relInfoConsumers.get(j).getIdDistributor()).setBudget(
@@ -84,6 +91,7 @@ public class Calc {
                     relInfoDistributors.get(
                             relInfoConsumers.get(j).getIdDistributor()).removeContract(j);
                 } else {
+
                     relInfoConsumers.get(j).setRestant(false);
                     relInfoConsumers.get(j).setBudget((int) (relInfoConsumers.get(j).getBudget()
                             - Math.round(Math.floor(1.2 * relInfoConsumers.get(j).getOldPrice()))
@@ -95,28 +103,57 @@ public class Calc {
     }
 
     /**
+     * Remove the distributor id from all producers
+     */
+    void removeIds(Integer id) {
+
+        for (RelInfoProducer relInfoProducer : relInfoProducers) {
+            relInfoProducer.getIds().remove(id);
+        }
+    }
+
+    /**
      * Updates the data of all the distributors and consumers till the program ends
      */
     public void calculate() {
 
         Initialize initialize = new Initialize(script);
-        Integer[] mins = initialize.newContract();
+        Integer[] mins = initialize.newContract(relInfoDistributors);
+        for (int i = 1; i <= script.getNumberOfTurns(); i++) {
+
+            for (RelInfoProducer relInfoProducer : relInfoProducers) {
+                relInfoProducer.getMonthlyStats().add(new MonthlyStat(i, new LinkedList<>()));
+            }
+        }
 
         for (int i = 0; i <= script.getNumberOfTurns(); i++) {
-
             if (i > 0) {
                 for (int j = 0; j < script.getMonthlyUpdates().get(
-                        i - 1).getCostsChanges().size(); j++) {
+                        i - 1).getDistributorChanges().size(); j++) {
+
                     relInfoDistributors.get(script.getMonthlyUpdates().get(
-                            i - 1).getCostsChanges().get(j).getId()).setInfrastructureCost(
+                            i - 1).getDistributorChanges().get(j).getId()).setInfrastructureCost(
                             script.getMonthlyUpdates().get(
-                                    i - 1).getCostsChanges().get(j).getInfrastructureCost());
-                    relInfoDistributors.get(script.getMonthlyUpdates().get(
-                            i - 1).getCostsChanges().get(j).getId()).setProductionCost(
-                            script.getMonthlyUpdates().get(
-                                    i - 1).getCostsChanges().get(j).getProductionCost());
+                                    i - 1).getDistributorChanges().get(j).getInfrastructureCost());
                 }
 
+                for (RelInfoDistributor relInfoDistributor : relInfoDistributors) {
+
+                    int profit = (int) Math.round(Math.floor(0.2
+                            * relInfoDistributor.getProductionCost()));
+                    if (relInfoDistributor.getContractSize() != 0) {
+
+                        relInfoDistributor.setContractCost(
+                                relInfoDistributor.getInfrastructureCost()
+                                / relInfoDistributor.getContractSize()
+                                + relInfoDistributor.getProductionCost() + profit);
+                    } else {
+
+                        relInfoDistributor.setContractCost(
+                                relInfoDistributor.getInfrastructureCost()
+                                + relInfoDistributor.getProductionCost() + profit);
+                    }
+                }
                 mins = initialize.renewContract(relInfoDistributors);
             }
 
@@ -125,19 +162,19 @@ public class Calc {
             }
 
             if (i > 0) {
-
                 for (int j = 0; j < script.getMonthlyUpdates().get(
                         i - 1).getNewConsumers().size(); j++) {
+
                     relInfoDistributors.get(mins[1]).setContractSize(
                             relInfoDistributors.get(mins[1]).getContractSize() + 1);
                     relInfoDistributors.get(mins[1]).getContracts().add(new Contract(
                             script.getMonthlyUpdates().get(i - 1).getNewConsumers().get(j).getId(),
                             mins[0], script.getInitialData().getDistributors().get(
-                                    mins[1]).getContractLength()));
+                            mins[1]).getContractLength()));
                     relInfoConsumers.add(new RelInfoConsumer(script.getMonthlyUpdates().get(
                             i - 1).getNewConsumers().get(j).getId(),
                             mins[0], script.getInitialData().getDistributors().get(
-                                    mins[1]).getContractLength(),
+                            mins[1]).getContractLength(),
                             script.getMonthlyUpdates().get(
                                     i - 1).getNewConsumers().get(j).getInitialBudget(),
                             script.getMonthlyUpdates().get(
@@ -154,12 +191,11 @@ public class Calc {
                     }
                 }
             }
-
             boolean ok = true;
 
             for (RelInfoDistributor infoDistributor : relInfoDistributors) {
-
                 if (!infoDistributor.isBankrupt()) {
+
                     ok = false;
                     infoDistributor.setBudget(infoDistributor.getBudget()
                             - infoDistributor.getInfrastructureCost()
@@ -174,12 +210,50 @@ public class Calc {
             }
 
             if (ok) {
-
                 for (RelInfoDistributor relInfoDistributor : relInfoDistributors) {
                     relInfoDistributor.getContracts().clear();
                 }
-
                 break;
+            }
+
+            if (i > 0) {
+                List<Integer> idsCopy = new LinkedList<>();
+
+                for (int j = 0; j < script.getMonthlyUpdates().get(
+                        i - 1).getProducerChanges().size(); j++) {
+
+                    relInfoProducers.sort(Comparator.comparingInt(RelInfoProducer::getId));
+                    relInfoProducers.get(script.getMonthlyUpdates().get(
+                            i - 1).getProducerChanges().get(j).getId()).setEnergyPerDistributor(
+                            script.getMonthlyUpdates().get(
+                                    i - 1).getProducerChanges().get(j).getEnergyPerDistributor());
+                    idsCopy.addAll(relInfoProducers.get(script.getMonthlyUpdates().get(
+                            i - 1).getProducerChanges().get(j).getId()).getIds());
+                }
+
+                idsCopy.sort(Comparator.comparingInt(p -> p));
+                for (Integer integer : idsCopy) {
+
+                    removeIds(integer);
+                    EnergyStrategy energyStrategy = new EnergyStrategy(
+                            script.getInitialData().getDistributors().get(
+                                    integer).getProducerStrategy(),
+                            integer, script.getInitialData().getDistributors().get(
+                                    integer).getEnergyNeededKW(),
+                            relInfoProducers);
+                    int productionCost = energyStrategy.productionCost();
+                    relInfoDistributors.get(integer).setProductionCost(productionCost);
+                }
+            }
+
+            if (i > 0) {
+                for (RelInfoProducer relInfoProducer : relInfoProducers) {
+
+                    relInfoProducer.setIds(relInfoProducer.getIds().stream().distinct().collect(
+                            Collectors.toList()));
+                    relInfoProducer.getMonthlyStats().get(i - 1).setDistributorsIds(
+                            new LinkedList<>(relInfoProducer.getIds()));
+                }
             }
         }
 
@@ -189,6 +263,7 @@ public class Calc {
 
             for (int j = 0; j < relInfoDistributors.get(
                     relInfoConsumers.get(i).getIdDistributor()).getContracts().size(); j++) {
+
                 if (relInfoDistributors.get(
                         relInfoConsumers.get(i).getIdDistributor()).getContracts().get(
                                 j).getConsumerId() == i) {
@@ -201,10 +276,31 @@ public class Calc {
             }
         }
 
-        for (RelInfoDistributor relInfoDistributor : relInfoDistributors) {
-            recalDistributors.add(new RecalDistributor(relInfoDistributor.getId(),
-                    relInfoDistributor.getBudget(), relInfoDistributor.isBankrupt(),
-                    relInfoDistributor.getContracts()));
+        for (int i = 0; i < relInfoDistributors.size(); i++) {
+
+            recalDistributors.add(new RecalDistributor(relInfoDistributors.get(i).getId(),
+                    script.getInitialData().getDistributors().get(i).getEnergyNeededKW(),
+                    relInfoDistributors.get(i).getContractCost(),
+                    relInfoDistributors.get(i).getBudget(),
+                    script.getInitialData().getDistributors().get(i).getProducerStrategy(),
+                    relInfoDistributors.get(i).isBankrupt(),
+                    relInfoDistributors.get(i).getContracts()));
         }
+
+        for (int i = 0; i < relInfoProducers.size(); i++) {
+
+            recalProducers.add(new RecalProducer(relInfoProducers.get(i).getId(),
+                    relInfoProducers.get(i).getMaxDistributors(),
+                    relInfoProducers.get(i).getPriceKW(),
+                    relInfoProducers.get(i).getEnergyType(),
+                    relInfoProducers.get(i).getEnergyPerDistributor(),
+                    relInfoProducers.get(i).getMonthlyStats()));
+
+            for (int j = 0; j < recalProducers.get(i).getMonthlyStats().size(); j++) {
+                recalProducers.get(i).getMonthlyStats().get(j).getDistributorsIds().sort(
+                        Comparator.comparingInt(o -> o));
+            }
+        }
+        recalProducers.sort(Comparator.comparingInt(RecalProducer::getId));
     }
 }

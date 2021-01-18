@@ -5,7 +5,8 @@ public class Distributor {
     private int contractLength;
     private int initialBudget;
     private int initialInfrastructureCost;
-    private int initialProductionCost;
+    private int energyNeededKW;
+    private String producerStrategy;
 
     /**
      * id getter
@@ -64,16 +65,30 @@ public class Distributor {
     }
 
     /**
-     * productionCost getter
+     * energyNeededKW getter
      */
-    public int getInitialProductionCost() {
-        return initialProductionCost;
+    public int getEnergyNeededKW() {
+        return energyNeededKW;
     }
 
     /**
-     * productionCost setter
+     * energyNeededKW setter
      */
-    public void setInitialProductionCost(final int initialProductionCost) {
-        this.initialProductionCost = initialProductionCost;
+    public void setEnergyNeededKW(final int energyNeededKW) {
+        this.energyNeededKW = energyNeededKW;
+    }
+
+    /**
+     * producerStrategy getter
+     */
+    public String getProducerStrategy() {
+        return producerStrategy;
+    }
+
+    /**
+     * producerStrategy setter
+     */
+    public void setProducerStrategy(final String producerStrategy) {
+        this.producerStrategy = producerStrategy;
     }
 }

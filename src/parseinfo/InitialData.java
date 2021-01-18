@@ -5,6 +5,7 @@ import java.util.List;
 public class InitialData {
     private List<Consumer> consumers;
     private List<Distributor> distributors;
+    private List<Producer> producers;
 
     /**
      * List of consumers getter
@@ -32,5 +33,19 @@ public class InitialData {
      */
     public void setDistributors(final List<Distributor> distributors) {
         this.distributors = distributors;
+    }
+
+    /**
+     * List of producers getter
+     */
+    public List<Producer> getProducers() {
+        return producers;
+    }
+
+    /**
+     * List of producers setter
+     */
+    public void setProducers(final List<Producer> producers) {
+        this.producers = producers;
     }
 }
