@@ -103,6 +103,49 @@ public class Calc {
     }
 
     /**
+     * Updates the producers
+     */
+    void updateProducer(final int i) {
+        List<Integer> idsCopy = new LinkedList<>();
+        relInfoProducers.sort(Comparator.comparingInt(RelInfoProducer::getId));
+
+        for (int j = 0; j < script.getMonthlyUpdates().get(
+                i - 1).getProducerChanges().size(); j++) {
+
+            relInfoProducers.get(script.getMonthlyUpdates().get(
+                    i - 1).getProducerChanges().get(j).getId()).setEnergyPerDistributor(
+                    script.getMonthlyUpdates().get(
+                            i - 1).getProducerChanges().get(j).getEnergyPerDistributor());
+
+            for (int k = 0; k < relInfoProducers.get(script.getMonthlyUpdates().get(
+                    i - 1).getProducerChanges().get(j).getId()).getIds().size(); k++) {
+
+                ProducerSubject producerSubject = new ProducerSubject();
+                new DistributorObserver(producerSubject);
+                idsCopy.add(producerSubject.setState(relInfoProducers.get(
+                        script.getMonthlyUpdates().get(
+                                i - 1).getProducerChanges().get(j).getId()).getIds().get(k)));
+            }
+        }
+
+        idsCopy = idsCopy.stream().distinct().collect(Collectors.toList());
+        idsCopy.sort(Comparator.comparingInt(p -> p));
+
+        for (Integer integer : idsCopy) {
+
+            removeIds(integer);
+            EnergyStrategy energyStrategy = new EnergyStrategy(
+                    script.getInitialData().getDistributors().get(
+                            integer).getProducerStrategy(),
+                    integer, script.getInitialData().getDistributors().get(
+                    integer).getEnergyNeededKW(),
+                    relInfoProducers);
+            int productionCost = energyStrategy.productionCost();
+            relInfoDistributors.get(integer).setProductionCost(productionCost);
+        }
+    }
+
+    /**
      * Remove the distributor id from all producers
      */
     void removeIds(Integer id) {
@@ -217,33 +260,7 @@ public class Calc {
             }
 
             if (i > 0) {
-                List<Integer> idsCopy = new LinkedList<>();
-
-                for (int j = 0; j < script.getMonthlyUpdates().get(
-                        i - 1).getProducerChanges().size(); j++) {
-
-                    relInfoProducers.sort(Comparator.comparingInt(RelInfoProducer::getId));
-                    relInfoProducers.get(script.getMonthlyUpdates().get(
-                            i - 1).getProducerChanges().get(j).getId()).setEnergyPerDistributor(
-                            script.getMonthlyUpdates().get(
-                                    i - 1).getProducerChanges().get(j).getEnergyPerDistributor());
-                    idsCopy.addAll(relInfoProducers.get(script.getMonthlyUpdates().get(
-                            i - 1).getProducerChanges().get(j).getId()).getIds());
-                }
-
-                idsCopy.sort(Comparator.comparingInt(p -> p));
-                for (Integer integer : idsCopy) {
-
-                    removeIds(integer);
-                    EnergyStrategy energyStrategy = new EnergyStrategy(
-                            script.getInitialData().getDistributors().get(
-                                    integer).getProducerStrategy(),
-                            integer, script.getInitialData().getDistributors().get(
-                                    integer).getEnergyNeededKW(),
-                            relInfoProducers);
-                    int productionCost = energyStrategy.productionCost();
-                    relInfoDistributors.get(integer).setProductionCost(productionCost);
-                }
+                updateProducer(i);
             }
 
             if (i > 0) {

@@ -1,0 +1,41 @@
+Nedelcu Stefan Laurentiu 323CA
+Etapa 2 - Proiect POO
+
+
+    Pe langa functionalitatea de la etapa 1, am adaugat si urmatoarele functii:
+        - Producer si ProducerChanges pentru a parsa informatia primita in fisierele de intrare;
+        - RecalProducer pentru a afisa corespunzator datele calculate;
+        - RelInfoProducer pentru a stoca toate informatiile relevante pentru un producator
+        
+    Am modificat clasa Initialize, adaugandu-i metoda intitRelInfoDistributors care returneaza o
+lista de RelInfoProducer. In aceeasi clasa, am modificat metoda initRelInfoDistributors pentru a
+determina costul de productie al fiecarui distribuitor folosindu-ma de desigs pattern-ul Strategy
+astfel:
+        * Clasa EnergyStrategy contine in constructor energyType(tipul energiei alese de
+    distribuitor), id-ul distribuitorului, cantitatea de energie pe care o doreste si
+    lista cu producatorii. Metoda din interiorul ei, productionCost, alege, in functie
+    de tipul energiei, strategia care trebuie implementata cu ajutorul uneia dintre
+    urmatoarele 3 clase:
+            - GreenStrategy: In metoda getProductionCost sorteaza producatorii, in primul
+            rand in functie de tipul energiei(regenerabilele primele), apoi in functie de
+            pret, apoi in functie de cantiatea de energie distribuita, dupa care apeleaza
+            metoda calculatePrice care returneaza pretul de productie avand grija sa ii
+            imparta distributorului cantitatea de energie ceruta;
+            - PriceStrategy: Face acelasi lucru ca si GreenStrategy, doar ca sorteaza
+            producatorii in functie de pret, apoi in functie de cantiatea de energie;
+            - QuantityStrategy: Face acelasi lucru si ca GreenStategy, dar ca sorteaza
+            producatorii in functie de cantitatea de energie distribuita.
+        Cele 3 clase implementeaza interfata EnergyPrice care contine cele 2 metode: 
+    getProductionCost si calculatePrice. 
+    
+    In clasa Calc, am adaugat metoda removeIds, care primeste ca parametru un id si il elimina
+din listele tuturor producatorilor care il contin si metoda updateProducer care actualizeaza
+informatiile despre producatori astfel:
+        * Incepe cu sortarea producatorilor in functie de id pentru a fi in permanenta sortati
+    corespunzator. Daca exista update-uri pentru producatori in luna respectiva, se actualizeaza
+    cantitatea de energie distribuita si pentru fiecare producator actualizat, se pun id-urile 
+    distribuitorilor carora le dau energie intr-o lista cu ajutorul design pattern-ului observer.
+    Apoi pentru fiecare id de distribuitor salvat in lista, se apeleaza metoda removeIds si i se
+    actualizeaza costul productiei cu ajutorul lui Strategy.
+    
+    In final, se parseaza datele obtinute in relInfoProducers in recalProducers si se afiseaza.
